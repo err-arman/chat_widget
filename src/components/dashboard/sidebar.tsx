@@ -9,15 +9,17 @@ import {
   LayoutDashboard,
   Settings,
   Users,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import logo from "@/../logo/kotha.svg";
+import Image from "next/image";
 
 const sideBarItems: { label: string; icon: any; link: string }[] = [
-  { label: "Home", icon: Home, link: "/dashboard" },
-//   { label: "Analytics", icon: BarChart2, link: "/dashboard" },
-//   { label: "Customers", icon: Users, link: "/user" },
-//   { label: "Settings", icon: Settings, link: "/settings" },
+  { label: "Dashboard", icon: Home, link: "/dashboard" },
+  { label: "Message", icon: MessageCircle, link: "/message" },
+
 ];
 
 export function Sidebar() {
@@ -30,7 +32,13 @@ export function Sidebar() {
       } transition-all duration-300`}
     >
       <div className="flex h-16 items-center justify-between px-4">
-        {!collapsed && <span className="text-lg font-semibold">Menu</span>}
+        {/* {!collapsed && <span className="text-lg font-semibold">Menu</span>} */}
+        <Link href="/message" className="flex items-center">
+          <Image src={logo} alt="Kotha Logo" width={32} height={32} />
+          <span className="text-sm font-medium text-gray-600 ml-2 mt-9">
+            powered by kotha
+          </span>{" "}
+        </Link>
         <Button
           variant="ghost"
           size="icon"
