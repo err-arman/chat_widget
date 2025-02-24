@@ -15,6 +15,7 @@ interface Message {
 }
 
 const ChatBoardForAdmin = () => {
+  const soundFile = "/vibrating-message-37619.mp3";
   const [messages, setMessages] = useState<Message[]>([]);
   const [send_to, setSendTo] = useState<string>("t1P2bxvSTQdjOT9sAAAp");
   const [isConnected, setIsConnected] = useState(false);
@@ -24,6 +25,9 @@ const ChatBoardForAdmin = () => {
 
   const searchParams = useSearchParams();
   const clientId = searchParams.get("clientId");
+  // const [play, { stop }] = useSound("/vibrating-message-37619.mp3");
+  const [audio] = useState(new Audio('/vibrating-message-37619.mp3'));
+
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +45,7 @@ const ChatBoardForAdmin = () => {
         {
           id: messages.length + 10000,
           text: newMessage,
-          send_from: socket?.id!,
+          send_from: "10",
         },
       ]);
 
@@ -94,22 +98,28 @@ const ChatBoardForAdmin = () => {
   useEffect(() => {
     if (socket?.id) {
       socket.emit("join", "10");
-        socket.on("10", (message) => {
-          setSendTo(message?.from);
+      socket.on("10", (message) => {
+        setSendTo(message?.from);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: prevMessages.length + 1,
+            text: message.message,
+            send_from: message.from,
+          },
+        ]);
 
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              id: prevMessages.length + 1,
-              text: message.message,
-              send_from: message.from,
-            },
-          ]);
-        });
-      }
-    }, [socket?.id]);
+        if (true) {
+          audio.play()
+            .catch(error => console.log("Audio playback failed:", error));
+        }
 
-    // implement socket end
+
+      });
+    }
+  }, [socket?.id]);
+
+  // implement socket end
 
   useEffect(() => {
     setMessages([]);
@@ -139,14 +149,12 @@ const ChatBoardForAdmin = () => {
               <div
                 key={message.id}
                 className={`flex ${
-                  message.send_from === '10'
-                    ? "justify-end"
-                    : "justify-start"
+                  message.send_from === "10" ? "justify-end" : "justify-start"
                 }`}
               >
                 <div
                   className={`max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-lg p-3 ${
-                    message.send_from === '10'
+                    message.send_from === "10"
                       ? "bg-blue-500 text-white"
                       : "bg-white text-gray-800"
                   }`}
@@ -164,7 +172,7 @@ const ChatBoardForAdmin = () => {
             ))}
           </div>
         ) : (
-        ''
+          ""
         )}
       </div>
       {clientId?.length ? (
@@ -201,8 +209,8 @@ const ChatBoardForAdmin = () => {
         </form>
       ) : (
         <div className="flex flex-1 items-center justify-center text-gray-500 h-full">
-        Select a chat to start messaging
-      </div>
+          Select a chat to start messaging
+        </div>
       )}
     </div>
   );

@@ -15,13 +15,20 @@ interface Message {
 }
 
 const ChatBoard = (user_id: { user_id?: number }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([{id: 1, text: '1', send_from: 'test', }]);
   const [isConnected, setIsConnected] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [socketIdFromLocal, setSocketIdFromLocal] = useState("");
   const userId = "10"; // Your user ID
+  // const [audio] = useState(new Audio('/vibrating-message-37619.mp3'));
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    setAudio(new Audio('/vibrating-message-37619.mp3'));
+  }, []);
+
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +37,7 @@ const ChatBoard = (user_id: { user_id?: number }) => {
         send_to: "10",
         message: newMessage,
         send_from: socket?.id,
+        first_message: messages?.length ? false : true,
       };
 
       socket.emit("privetMessage", messageData);
@@ -78,7 +86,10 @@ const ChatBoard = (user_id: { user_id?: number }) => {
       setIsConnected(true);
       const socketId = localStorage.getItem("socket_id");
       if (!socketId && socketInstance?.id) {
-        socketInstance.emit("sendSocketId", {socketId: socketInstance?.id, role: 'user'});
+        socketInstance.emit("sendSocketId", {
+          socketId: socketInstance?.id,
+          role: "user",
+        });
         localStorage.setItem(`socket_id`, socketInstance?.id);
       }
     });
@@ -102,6 +113,12 @@ const ChatBoard = (user_id: { user_id?: number }) => {
 
       socket.on(socket?.id, (messageData) => {
         console.log("listen message", messageData);
+
+        if (true && audio) {
+          audio.play()
+            .catch(error => console.log("Audio playback failed:", error));
+        }
+
 
         setMessages((prevMessages) => [
           ...prevMessages,
@@ -147,10 +164,10 @@ const ChatBoard = (user_id: { user_id?: number }) => {
               />
             )}
             <div
-              className={`max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-lg p-3 ${
+              className={`max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-xl p-2 ${
                 message.send_from === socket?.id
-                  ? "bg-gray-200 text-black"
-                  : "bg-custom-green text-white"
+                  ? "bg-custom-green text-white"
+                  : "bg-gray-200 text-black"
               }`}
             >
               <p>{message.text}</p>
