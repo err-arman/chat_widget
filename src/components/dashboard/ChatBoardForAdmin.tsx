@@ -5,6 +5,7 @@ import { Send, Paperclip } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 import { useSearchParams } from "next/navigation";
 import { getMessages } from "@/actions/actions";
+import useUser from "@/hook/useUser";
 
 interface Message {
   id: number;
@@ -26,7 +27,7 @@ const ChatBoardForAdmin = () => {
   const searchParams = useSearchParams();
   const clientId = searchParams.get("clientId");
   // const [play, { stop }] = useSound("/vibrating-message-37619.mp3");
-  const [audio] = useState(new Audio('/vibrating-message-37619.mp3'));
+  const [audio] = useState(new Audio("/vibrating-message-37619.mp3"));
 
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -110,11 +111,10 @@ const ChatBoardForAdmin = () => {
         ]);
 
         if (true) {
-          audio.play()
-            .catch(error => console.log("Audio playback failed:", error));
+          audio
+            .play()
+            .catch((error) => console.log("Audio playback failed:", error));
         }
-
-
       });
     }
   }, [socket?.id]);

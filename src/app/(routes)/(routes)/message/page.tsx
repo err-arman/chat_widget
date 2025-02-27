@@ -1,4 +1,3 @@
-import ChatBoard from "@/components/chat/ChatBoard";
 import ChatBoardForAdmin from "@/components/dashboard/ChatBoardForAdmin";
 import MessageList from "@/components/message/message-list";
 
