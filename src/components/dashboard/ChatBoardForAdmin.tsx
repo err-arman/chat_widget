@@ -10,7 +10,7 @@ import useUser from "@/hook/useUser";
 interface Message {
   id: number;
   text: string;
-  send_from: string;
+  socket_id: string;
   send_to?: string;
   file?: string;
 }
@@ -23,21 +23,25 @@ const ChatBoardForAdmin = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const { user } = useUser();
   const searchParams = useSearchParams();
   const clientId = searchParams.get("clientId");
   // const [play, { stop }] = useSound("/vibrating-message-37619.mp3");
   const [audio] = useState(new Audio("/vibrating-message-37619.mp3"));
-
+  const [idForMessage, setIdForMessage] = useState("100");
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (newMessage.trim() && socket) {
       const messageData = {
-        send_to: send_to,
+        send_to_socket_id: send_to,
+        send_to: clientId,
         message: newMessage,
-        send_from: "10",
+        socket_id: socket?.id,
+        user_id: user?.id,
+        client_id: '100',
       };
+      console.log("message data", messageData);
       socket.emit("privetMessage", messageData);
 
       // Update local messages
@@ -46,7 +50,7 @@ const ChatBoardForAdmin = () => {
         {
           id: messages.length + 10000,
           text: newMessage,
-          send_from: "10",
+          socket_id: idForMessage,
         },
       ]);
 
@@ -63,13 +67,12 @@ const ChatBoardForAdmin = () => {
         {
           id: messages.length + 1,
           text: `File: ${file.name}`,
-          send_from: "user",
+          socket_id: "user",
           file: URL.createObjectURL(file),
         },
       ]);
     }
   };
-
 
   // implement socket start
   useEffect(() => {
@@ -96,39 +99,86 @@ const ChatBoardForAdmin = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (socket?.id) {
-      socket.emit("join", "10");
-      socket.on("10", (message) => {
-        setSendTo(message?.from);
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            id: prevMessages.length + 1,
-            text: message.message,
-            send_from: message.from,
-          },
-        ]);
+  // useEffect(() => {
+  //   if (socket?.id) {
+  //     // console.log(')
+  //     socket.emit("join", idForMessage);
+  //     socket.on(idForMessage!, (message) => {
+  //       setSendTo(message?.client_id);
 
-        if (true) {
-          audio
-            .play()
-            .catch((error) => console.log("Audio playback failed:", error));
-        }
-      });
-    }
-  }, [socket?.id]);
+  //       console.log("clientId", clientId);
+  //       console.log("messageClientId", message?.client_id);
+
+  //       if (clientId === message?.client_id) {
+  //         console.log('booth id same')
+  //         setMessages((prevMessages) => [
+  //           ...prevMessages,
+  //           {
+  //             id: prevMessages.length + 1,
+  //             text: message.message,
+  //             socket_id: message.from,
+  //           },
+  //         ]);
+  //       }
+
+  //       if (true) {
+  //         audio
+  //           .play()
+  //           .catch((error) => console.log("Audio playback failed:", error));
+  //       }
+  //     });
+  //   }
+  // }, [socket?.id, idForMessage, clientId]);
 
   // implement socket end
+
+
+  useEffect(() => {
+    if (socket?.id) {
+      socket.emit("join", idForMessage);
+      console.log('socket id', socket.id)
+  
+      const messageHandler = (message:any) => {
+        setSendTo(message?.socket_id);
+  
+        if (clientId && clientId === message?.client_id) {
+          // console.log("Both IDs are the same");
+          console.log('message from user', message);
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              send_to: '100',
+              id: prevMessages.length + 1,
+              text: message.message,
+              socket_id: message.socket_id,
+              client_id: message.client_id
+            },
+          ]);
+        }
+  
+        if (audio) {
+          audio.play().catch((error) => console.log("Audio playback failed:", error));
+        }
+      };
+  
+      socket.on(idForMessage, messageHandler);
+  
+      return () => {
+        socket.off(idForMessage, messageHandler);
+      };
+    }
+  }, [socket?.id, idForMessage, clientId, audio]);
+  
 
   useEffect(() => {
     setMessages([]);
     const fetchMessages = async () => {
       if (clientId) {
         try {
-          const clientMessage = await getMessages("10", clientId);
+          const clientMessage = await getMessages(idForMessage!, clientId);
           // If clientMessage contains messages, update the state
           if (clientMessage?.length) {
+            console.log('client messae',clientMessage)
             setMessages(clientMessage);
           }
         } catch (error) {
@@ -140,21 +190,27 @@ const ChatBoardForAdmin = () => {
     fetchMessages();
   }, [clientId]);
 
+  // useEffect(() => {
+  //   if (messages) console.log("messages", messages);
+  // }, [messages]);
+
   return (
     <div className="flex flex-col h-full bg-gray-100">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages?.length ? (
+        {messages?.length && clientId?.length ? (
           <div>
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${
-                  message.send_from === "10" ? "justify-end" : "justify-start"
+                  message.send_to !== idForMessage
+                    ? "justify-end"
+                    : "justify-start"
                 }`}
               >
                 <div
                   className={`max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-lg p-3 ${
-                    message.send_from === "10"
+                    message.socket_id === idForMessage
                       ? "bg-blue-500 text-white"
                       : "bg-white text-gray-800"
                   }`}

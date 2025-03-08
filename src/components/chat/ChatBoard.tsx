@@ -10,36 +10,43 @@ import { useSearchParams } from "next/navigation";
 interface Message {
   id: number;
   text: string;
-  send_from: string;
+  socket_id: string;
   file?: string;
 }
 
 const ChatBoard = (user_id: { user_id?: number }) => {
-  const [messages, setMessages] = useState<Message[]>([{id: 1, text: '1', send_from: 'test', }]);
+  const [messages, setMessages] = useState<Message[]>([
+    // { id: 1, text: "1", socket_id: "test" },
+  ]);
   const [isConnected, setIsConnected] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [socketIdFromLocal, setSocketIdFromLocal] = useState("");
-  const userId = "10"; // Your user ID
+  // const userId = "100"; // Your user ID
+  const [idForMessage, setIdForMessage] = useState("100");
+
   // const [audio] = useState(new Audio('/vibrating-message-37619.mp3'));
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    setAudio(new Audio('/vibrating-message-37619.mp3'));
+    setAudio(new Audio("/vibrating-message-37619.mp3"));
   }, []);
-
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
+    const client_id = localStorage.getItem("client_id");
+    if (!client_id) console.log("please reload!");
     if (newMessage.trim() && socket) {
       const messageData = {
-        send_to: "10",
+        send_to_socket_id: idForMessage,
+        send_to: idForMessage,
         message: newMessage,
-        send_from: socket?.id,
+        socket_id: socket?.id,
         first_message: messages?.length ? false : true,
+        client_id: client_id,
       };
-
+      console.log('message daata', messageData)
       socket.emit("privetMessage", messageData);
       // Update local messages
       setMessages([
@@ -47,7 +54,7 @@ const ChatBoard = (user_id: { user_id?: number }) => {
         {
           id: messages.length + 1,
           text: newMessage,
-          send_from: socket?.id!,
+          socket_id: socket?.id!,
         },
       ]);
 
@@ -63,7 +70,7 @@ const ChatBoard = (user_id: { user_id?: number }) => {
         {
           id: messages.length + 1,
           text: `File: ${file.name}`,
-          send_from: socket?.id!,
+          socket_id: socket?.id!,
           file: URL.createObjectURL(file),
         },
       ]);
@@ -72,69 +79,143 @@ const ChatBoard = (user_id: { user_id?: number }) => {
 
   // implement socket start
 
+  // useEffect(() => {
+  //   console.log(
+  //     `process.env.NEXT_PUBLIC_NEXT_PUBLIC_SOCKET = ${process.env.NEXT_PUBLIC_SOCKET}`
+  //   );
+  //   // Initialize socket connection
+  //   const socketInstance = io(`${process.env.NEXT_PUBLIC_SOCKET}`, {
+  //     transports: ["websocket"],
+  //     autoConnect: true,
+  //   });
+
+  //   socketInstance.on("connect", () => {
+  //     setIsConnected(true);
+  //     const client_id = localStorage.getItem("client_id");
+  //     if (!client_id && socketInstance?.id) {
+        
+  //       socketInstance.emit("sendSocketId", {
+  //         client_id: socketInstance?.id,
+  //         role: "user",
+  //       });
+  //       localStorage.setItem(`client_id`, socketInstance?.id);
+  //     }
+  //   });
+
+  //   socketInstance.on("disconnect", () => {
+  //     setIsConnected(false);
+  //     console.log("Disconnected from socket server");
+  //   });
+
+  //   setSocket(socketInstance);
+
+  //   return () => {
+  //     socketInstance.disconnect();
+  //   };
+  // }, []);
+
+
   useEffect(() => {
     console.log(
-      `process.env.NEXT_PUBLIC_NEXT_PUBLIC_SOCKET = ${process.env.NEXT_PUBLIC_SOCKET}`
+      `process.env.NEXT_PUBLIC_SOCKET = ${process.env.NEXT_PUBLIC_SOCKET}`
     );
-    // Initialize socket connection
+    
+    // Get stored client_id
+    const storedClientId = localStorage.getItem("client_id");
+    
+    // Initialize socket connection with client_id in query params if available
     const socketInstance = io(`${process.env.NEXT_PUBLIC_SOCKET}`, {
       transports: ["websocket"],
       autoConnect: true,
+      auth: storedClientId ? { customId: storedClientId } : undefined
     });
-
+  
     socketInstance.on("connect", () => {
       setIsConnected(true);
-      const socketId = localStorage.getItem("socket_id");
-      if (!socketId && socketInstance?.id) {
-        socketInstance.emit("sendSocketId", {
-          socketId: socketInstance?.id,
-          role: "user",
-        });
-        localStorage.setItem(`socket_id`, socketInstance?.id);
+      
+      // Get or create client_id
+      const client_id = localStorage.getItem("client_id") || socketInstance.id;
+        console.log('client id', client_id)
+      // Store it if it's new
+      if (!localStorage.getItem("client_id")) {
+        localStorage.setItem("client_id", client_id!);
       }
+      
+      // Always send this ID to the server after connection
+      socketInstance.emit("sendSocketId", {
+        client_id: client_id,
+        role: "user",
+      });
+      
+      // Join a room with this client_id for direct messaging
+      socketInstance.emit("join", client_id);
     });
-
+  
     socketInstance.on("disconnect", () => {
       setIsConnected(false);
       console.log("Disconnected from socket server");
     });
-
+  
     setSocket(socketInstance);
-
+  
     return () => {
       socketInstance.disconnect();
     };
   }, []);
 
+
+
   useEffect(() => {
     if (socket?.id) {
-      // socket.current.emit('join', userId);
-      socket.emit("join", "10");
+      // socket.current.emit('join', idForMessage);
+      const client_id = localStorage.getItem("client_id");
+      socket.emit("join", idForMessage);
+      // socket.on(client_id!, (messageData) => {
+      //   if (true && audio) {
+      //     audio
+      //       .play()
+      //       .catch((error) => console.log("Audio playback failed:", error));
+      //   }
 
-      socket.on(socket?.id, (messageData) => {
-        console.log("listen message", messageData);
+      //   setMessages((prevMessages) => [
+      //     ...prevMessages,
+      //     {
+      //       id: prevMessages.length + 1,
+      //       text: messageData.message,
+      //       socket_id: messageData.from,
+      //     },
+      //   ]);
+      // });
 
-        if (true && audio) {
-          audio.play()
-            .catch(error => console.log("Audio playback failed:", error));
+
+      const messageHandler = (messageData: any) => {
+        if (audio) {
+          audio.play().catch((error) => console.log("Audio playback failed:", error));
         }
-
-
+  
         setMessages((prevMessages) => [
           ...prevMessages,
           {
             id: prevMessages.length + 1,
             text: messageData.message,
-            send_from: messageData.from,
+            socket_id: messageData.from,
           },
         ]);
-      });
+      };
+  
+      socket.on(socket?.id, messageHandler);
+
+      return () => {
+        socket.off(client_id!, messageHandler);
+      };
+
+
     }
   }, [socket?.id]);
 
   useEffect(() => {
     if (socket?.id) {
-      const socketIdFromLocalStorage = localStorage.getItem("socket_id");
+      const socketIdFromLocalStorage = localStorage.getItem("client_id");
       if (socketIdFromLocalStorage) {
         setSocketIdFromLocal(socketIdFromLocalStorage);
       }
@@ -150,11 +231,11 @@ const ChatBoard = (user_id: { user_id?: number }) => {
           <div
             key={message.id}
             className={`flex items-center ${
-              message.send_from === socket?.id ? "justify-end" : "justify-start"
+              message.socket_id === socket?.id ? "justify-end" : "justify-start"
             }`}
           >
             {/* Add the logo if the message is from another sender */}
-            {message.send_from !== socket?.id && (
+            {message.socket_id !== socket?.id && (
               <Image
                 src={logo}
                 alt="Kotha Logo"
@@ -165,7 +246,7 @@ const ChatBoard = (user_id: { user_id?: number }) => {
             )}
             <div
               className={`max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-xl p-2 ${
-                message.send_from === socket?.id
+                message.socket_id === socket?.id
                   ? "bg-custom-green text-white"
                   : "bg-gray-200 text-black"
               }`}
