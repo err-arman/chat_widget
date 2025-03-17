@@ -39,7 +39,7 @@ const ChatBoardForAdmin = () => {
         message: newMessage,
         socket_id: socket?.id,
         user_id: user?.id,
-        client_id: '100',
+        client_id: "100",
       };
       // console.log("message data", messageData);
       socket.emit("privetMessage", messageData);
@@ -132,43 +132,43 @@ const ChatBoardForAdmin = () => {
 
   // implement socket end
 
-
   useEffect(() => {
     if (socket?.id) {
       socket.emit("join", idForMessage);
       // console.log('socket id', socket.id)
-  
-      const messageHandler = (message:any) => {
+
+      const messageHandler = (message: any) => {
         setSendTo(message?.socket_id);
-  
+
         if (clientId && clientId === message?.client_id) {
           // console.log("Both IDs are the same");
           // console.log('message from user', message);
           setMessages((prevMessages) => [
             ...prevMessages,
             {
-              send_to: '100',
+              send_to: "100",
               id: prevMessages.length + 1,
               text: message.message,
               socket_id: message.socket_id,
-              client_id: message.client_id
+              client_id: message.client_id,
             },
           ]);
         }
-  
+
         if (audio) {
-          audio.play().catch((error) => console.log("Audio playback failed:", error));
+          audio
+            .play()
+            .catch((error) => console.log("Audio playback failed:", error));
         }
       };
-  
+
       socket.on(idForMessage, messageHandler);
-  
+
       return () => {
         socket.off(idForMessage, messageHandler);
       };
     }
   }, [socket?.id, idForMessage, clientId, audio]);
-  
 
   useEffect(() => {
     setMessages([]);
@@ -190,9 +190,9 @@ const ChatBoardForAdmin = () => {
     fetchMessages();
   }, [clientId]);
 
-  // useEffect(() => {
-  //   if (messages) console.log("messages", messages);
-  // }, [messages]);
+  useEffect(() => {
+    if (messages) console.log("messages", messages);
+  }, [messages]);
 
   return (
     <div className="flex flex-col h-full bg-gray-100">
@@ -209,8 +209,8 @@ const ChatBoardForAdmin = () => {
                 }`}
               >
                 <div
-                  className={`max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-lg p-3 ${
-                    message.socket_id === idForMessage
+                  className={`max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl rounded-lg p-3 mt-3 ${
+                    message.send_to !== idForMessage
                       ? "bg-blue-500 text-white"
                       : "bg-white text-gray-800"
                   }`}

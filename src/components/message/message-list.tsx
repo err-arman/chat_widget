@@ -18,7 +18,13 @@ interface Client {
   id: number;
   created_at: string;
   socket_id: string;
+  clientid: string;
+  sent_to: string;
+  client_id: string;
   updated_at: string;
+  lastmessage?: string;
+  client_socket_id: string;
+  lastmessagedate?: string;
 }
 
 const MessageList = () => {
@@ -30,8 +36,13 @@ const MessageList = () => {
   const axios = createAxiosInstance();
 
   const getClientList = async () => {
-    const result = await axios.get(`/client`);
-    setClient(result.data.data);
+    try {
+      const result = await axios.get(`/client`);
+      console.log(`result`, result.data.data);
+      setClient(result.data.data);
+    } catch (error) {
+      console.log(`error in getClientList`, error);
+    }
   };
 
   useEffect(() => {
@@ -47,10 +58,23 @@ const MessageList = () => {
     });
 
     socketInstance.on("new-client", (newClient) => {
-      // console.log("new client", newClient);
-      setClient((prevClients) => [newClient, ...prevClients]);
-      // setIsConnected(true);
+      console.log("new client", newClient);
+      setClient((prevClients) => [
+        {
+          ...newClient,
+          client_socket_id: newClient.socket_id,
+          clientid: newClient.socket_id,
+          lastmessage: null,
+          lastmessagedate: null,
+        },
+        ...prevClients,
+      ]);
+      // setClient((prevClients) => [newClient, ...prevClients]);
+      setIsConnected(true);
     });
+
+
+    // socketInstance.on();
 
     socketInstance.on("disconnect", () => {
       setIsConnected(false);
@@ -64,41 +88,29 @@ const MessageList = () => {
     };
   }, []);
 
-  // useEffect(() => {
-  //   // Listen for new client events
-  //   if (!socket?.id) return;
-  //   // console.log('socket in message list');
-  //   socket.on("new-client", (newClient) => {
-  //     console.log("new client", newClient);
-  //     // setClients((prevClients) => [...prevClients, newClient]);
-  //   });
-
-  //   return () => {
-  //     socket.off("new-client"); // Cleanup listener
-  //   };
-  // }, [socket?.id]);
-
   return (
     <div className="space-y-2">
       <h2 className="text-lg font-semibold mb-4 text-gray-800">Messages</h2>
       {client.map((client: Client) => (
         <div
           onClick={() => {
-            router.push(`?clientId=${client?.socket_id}`);
+            router.push(`?clientId=${client.clientid === "100" ? client.client_socket_id : client.clientid}`);
           }}
-          key={client.id}
+          key={`${client.client_id}`}
           className="flex items-center space-x-3 p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
         >
           <div className="flex-shrink-0">
             <User className="h-10 w-10 text-gray-400 bg-gray-200 rounded-full p-2" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {client.socket_id}
-            </p>
-            {/* <p className="text-sm text-gray-500 truncate">
-              {message.lastMessage}
-            </p> */}
+            <div>
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {client.clientid === "100" ? client.client_socket_id : client.clientid}
+              </p>
+              <p className="text-sm text-gray-500 truncate">
+                {client.lastmessage || "No messages yet"}
+              </p>
+            </div>
           </div>
           <div className="flex-shrink-0">
             {/* <p className="text-xs text-gray-400">{message.timestamp}</p> */}
