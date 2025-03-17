@@ -7,7 +7,7 @@ export const getMessages = async (userId: string, clientId: string) => {
     const result = await axiosInstance.get(
       `/messages?userId=${userId}&clientId=${clientId}`
     );
-    console.log('message result', result)
+    // console.log('message result', result)
     return result.data.data;
   } catch (error) {
     console.log(`Error while getting message`, error);

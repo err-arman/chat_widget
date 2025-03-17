@@ -24,13 +24,13 @@ const useUser = (auth_token?: string) => {
         const token = cookies
           .find((cookie) => cookie.trim().startsWith(`auth_token=`))
           ?.split("=")[1];
-        console.log("token from cookie", token);
-        console.log(`Bearer ${token ? token : auth_token}`);
+        // console.log("token from cookie", token);
+        // console.log(`Bearer ${token ? token : auth_token}`);
 
         if (!token && !auth_token) {
           throw new Error("No authentication token found");
         }
-        console.log(`token: ${token} authToken: ${auth_token}`);
+        // console.log(`token: ${token} authToken: ${auth_token}`);
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_API_SSO_SERVER_URL}/api/user/profile`,
           {

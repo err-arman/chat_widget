@@ -41,7 +41,7 @@ const ChatBoardForAdmin = () => {
         user_id: user?.id,
         client_id: '100',
       };
-      console.log("message data", messageData);
+      // console.log("message data", messageData);
       socket.emit("privetMessage", messageData);
 
       // Update local messages
@@ -136,14 +136,14 @@ const ChatBoardForAdmin = () => {
   useEffect(() => {
     if (socket?.id) {
       socket.emit("join", idForMessage);
-      console.log('socket id', socket.id)
+      // console.log('socket id', socket.id)
   
       const messageHandler = (message:any) => {
         setSendTo(message?.socket_id);
   
         if (clientId && clientId === message?.client_id) {
           // console.log("Both IDs are the same");
-          console.log('message from user', message);
+          // console.log('message from user', message);
           setMessages((prevMessages) => [
             ...prevMessages,
             {
@@ -178,7 +178,7 @@ const ChatBoardForAdmin = () => {
           const clientMessage = await getMessages(idForMessage!, clientId);
           // If clientMessage contains messages, update the state
           if (clientMessage?.length) {
-            console.log('client messae',clientMessage)
+            // console.log('client messae',clientMessage)
             setMessages(clientMessage);
           }
         } catch (error) {

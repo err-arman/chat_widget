@@ -5,6 +5,7 @@ import { User } from "lucide-react";
 import createAxiosInstance from "@/utils/api";
 import { userAgent } from "next/server";
 import { useRouter } from "next/navigation";
+import { io, Socket } from "socket.io-client";
 
 interface MessagePreview {
   id: number;
@@ -21,9 +22,10 @@ interface Client {
 }
 
 const MessageList = () => {
-  
   const [client, setClient] = useState<Client[]>([]);
   const router = useRouter();
+  const [isConnected, setIsConnected] = useState(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   const axios = createAxiosInstance();
 
@@ -35,6 +37,46 @@ const MessageList = () => {
   useEffect(() => {
     getClientList();
   }, []);
+
+  // implement socket start
+  useEffect(() => {
+    // Initialize socket connection
+    const socketInstance = io(`${process.env.NEXT_PUBLIC_SOCKET}`, {
+      transports: ["websocket"],
+      autoConnect: true,
+    });
+
+    socketInstance.on("new-client", (newClient) => {
+      // console.log("new client", newClient);
+      setClient((prevClients) => [newClient, ...prevClients]);
+      // setIsConnected(true);
+    });
+
+    socketInstance.on("disconnect", () => {
+      setIsConnected(false);
+      console.log("Disconnected from socket server");
+    });
+
+    setSocket(socketInstance);
+
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, []);
+
+  // useEffect(() => {
+  //   // Listen for new client events
+  //   if (!socket?.id) return;
+  //   // console.log('socket in message list');
+  //   socket.on("new-client", (newClient) => {
+  //     console.log("new client", newClient);
+  //     // setClients((prevClients) => [...prevClients, newClient]);
+  //   });
+
+  //   return () => {
+  //     socket.off("new-client"); // Cleanup listener
+  //   };
+  // }, [socket?.id]);
 
   return (
     <div className="space-y-2">
