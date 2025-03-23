@@ -32,7 +32,7 @@ const useUser = (auth_token?: string) => {
         }
         // console.log(`token: ${token} authToken: ${auth_token}`);
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_SSO_SERVER_URL}/api/user/profile`,
+          `${process.env.NEXT_PUBLIC_API_SSO_SERVER_URL}api/user/profile`,
           {
             headers: {
               Authorization: `Bearer ${token ? token : auth_token}`,

@@ -116,9 +116,9 @@ const ChatBoard = (user_id: { user_id?: number }) => {
 
 
   useEffect(() => {
-    console.log(
-      `process.env.NEXT_PUBLIC_SOCKET = ${process.env.NEXT_PUBLIC_SOCKET}`
-    );
+    // console.log(
+    //   `process.env.NEXT_PUBLIC_SOCKET = ${process.env.NEXT_PUBLIC_SOCKET}`
+    // );
     
     // Get stored client_id
     const storedClientId = localStorage.getItem("client_id");
