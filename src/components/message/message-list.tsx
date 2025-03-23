@@ -104,10 +104,10 @@ const MessageList = () => {
           </div>
           <div className="flex-1 min-w-0">
             <div>
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-semibold text-gray-900 truncate">
                 {client.clientid === "100" ? client.client_socket_id : client.clientid}
               </p>
-              <p className="text-sm text-gray-500 truncate">
+              <p className="text-sm font-medium text-gray-500 truncate">
                 {client.lastmessage || "No messages yet"}
               </p>
             </div>

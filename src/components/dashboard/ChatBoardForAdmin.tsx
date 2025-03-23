@@ -195,8 +195,14 @@ const ChatBoardForAdmin = () => {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-100">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-full bg-gray-100 w-4/5 mr-[20%] relative">
+      {messages?.length && clientId?.length ? (
+        <div className="absolute top-0 right-[-25%] w-[25%] h-full"></div>
+      ) : (
+        ""
+      )}
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white-200">
         {messages?.length && clientId?.length ? (
           <div>
             {messages.map((message) => (
