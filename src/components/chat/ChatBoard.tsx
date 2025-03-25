@@ -23,8 +23,8 @@ const ChatBoard = (user_id: { user_id?: number }) => {
   const [newMessage, setNewMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [socketIdFromLocal, setSocketIdFromLocal] = useState("");
-  // const userId = "100"; // Your user ID
   const [idForMessage, setIdForMessage] = useState("100");
+  const [clientId, setClientId] = useState("");
 
   // const [audio] = useState(new Audio('/vibrating-message-37619.mp3'));
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
@@ -46,8 +46,8 @@ const ChatBoard = (user_id: { user_id?: number }) => {
         first_message: messages?.length ? false : true,
         client_id: client_id,
       };
-      console.log('message daata', messageData)
-      socket.emit("privetMessage", messageData);
+      console.log("message daata", messageData);
+      socket.emit("message", messageData);
       // Update local messages
       setMessages([
         ...messages,
@@ -77,122 +77,58 @@ const ChatBoard = (user_id: { user_id?: number }) => {
     }
   };
 
-  // implement socket start
-
-  // useEffect(() => {
-  //   console.log(
-  //     `process.env.NEXT_PUBLIC_NEXT_PUBLIC_SOCKET = ${process.env.NEXT_PUBLIC_SOCKET}`
-  //   );
-  //   // Initialize socket connection
-  //   const socketInstance = io(`${process.env.NEXT_PUBLIC_SOCKET}`, {
-  //     transports: ["websocket"],
-  //     autoConnect: true,
-  //   });
-
-  //   socketInstance.on("connect", () => {
-  //     setIsConnected(true);
-  //     const client_id = localStorage.getItem("client_id");
-  //     if (!client_id && socketInstance?.id) {
-        
-  //       socketInstance.emit("sendSocketId", {
-  //         client_id: socketInstance?.id,
-  //         role: "user",
-  //       });
-  //       localStorage.setItem(`client_id`, socketInstance?.id);
-  //     }
-  //   });
-
-  //   socketInstance.on("disconnect", () => {
-  //     setIsConnected(false);
-  //     console.log("Disconnected from socket server");
-  //   });
-
-  //   setSocket(socketInstance);
-
-  //   return () => {
-  //     socketInstance.disconnect();
-  //   };
-  // }, []);
-
-
   useEffect(() => {
-    // console.log(
-    //   `process.env.NEXT_PUBLIC_SOCKET = ${process.env.NEXT_PUBLIC_SOCKET}`
-    // );
-    
-    // Get stored client_id
-    const storedClientId = localStorage.getItem("client_id");
-    
+
     // Initialize socket connection with client_id in query params if available
-    const socketInstance = io(`${process.env.NEXT_PUBLIC_SOCKET}`, {
-      transports: ["websocket"],
-      autoConnect: true,
-      auth: storedClientId ? { customId: storedClientId } : undefined
-    });
-  
+    const socketInstance = io(`${process.env.NEXT_PUBLIC_API_URL_ROOT}`);
+
     socketInstance.on("connect", () => {
       setIsConnected(true);
-      
+
       // Get or create client_id
       const client_id = localStorage.getItem("client_id") || socketInstance.id;
-        console.log('client id', client_id)
+      console.log("client id", client_id);
+      setClientId(client_id!);
       // Store it if it's new
       if (!localStorage.getItem("client_id")) {
         localStorage.setItem("client_id", client_id!);
       }
-      
+
       // Always send this ID to the server after connection
       socketInstance.emit("sendSocketId", {
         client_id: client_id,
         role: "user",
       });
-      
+
       // Join a room with this client_id for direct messaging
       socketInstance.emit("join", client_id);
     });
-  
+
     socketInstance.on("disconnect", () => {
       setIsConnected(false);
       console.log("Disconnected from socket server");
     });
-  
+
     setSocket(socketInstance);
-  
+
     return () => {
       socketInstance.disconnect();
     };
   }, []);
-
-
 
   useEffect(() => {
     if (socket?.id) {
       // socket.current.emit('join', idForMessage);
       const client_id = localStorage.getItem("client_id");
       socket.emit("join", idForMessage);
-      // socket.on(client_id!, (messageData) => {
-      //   if (true && audio) {
-      //     audio
-      //       .play()
-      //       .catch((error) => console.log("Audio playback failed:", error));
-      //   }
-
-      //   setMessages((prevMessages) => [
-      //     ...prevMessages,
-      //     {
-      //       id: prevMessages.length + 1,
-      //       text: messageData.message,
-      //       socket_id: messageData.from,
-      //     },
-      //   ]);
-      // });
-
-
+    
       const messageHandler = (messageData: any) => {
         if (audio) {
-          audio.play().catch((error) => console.log("Audio playback failed:", error));
+          audio
+            .play()
+            .catch((error) => console.log("Audio playback failed:", error));
         }
-  
+
         setMessages((prevMessages) => [
           ...prevMessages,
           {
@@ -202,16 +138,13 @@ const ChatBoard = (user_id: { user_id?: number }) => {
           },
         ]);
       };
-  
-      socket.on(socket?.id, messageHandler);
+      socket.on(clientId, messageHandler);
 
       return () => {
-        socket.off(client_id!, messageHandler);
+        socket.off(clientId!, messageHandler);
       };
-
-
     }
-  }, [socket?.id]);
+  }, [socket?.id, clientId]);
 
   useEffect(() => {
     if (socket?.id) {

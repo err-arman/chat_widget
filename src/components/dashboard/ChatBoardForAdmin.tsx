@@ -41,8 +41,7 @@ const ChatBoardForAdmin = () => {
         user_id: user?.id,
         client_id: "100",
       };
-      // console.log("message data", messageData);
-      socket.emit("privetMessage", messageData);
+      socket.emit("message", messageData);
 
       // Update local messages
       setMessages([
@@ -61,7 +60,6 @@ const ChatBoardForAdmin = () => {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // In a real app, you'd upload the file to a server here
       setMessages([
         ...messages,
         {
@@ -77,10 +75,7 @@ const ChatBoardForAdmin = () => {
   // implement socket start
   useEffect(() => {
     // Initialize socket connection
-    const socketInstance = io(`${process.env.NEXT_PUBLIC_SOCKET}`, {
-      transports: ["websocket"],
-      autoConnect: true,
-    });
+    const socketInstance = io(`${process.env.NEXT_PUBLIC_API_URL_ROOT}`);
 
     socketInstance.on("connect", () => {
       setIsConnected(true);
@@ -99,50 +94,15 @@ const ChatBoardForAdmin = () => {
     };
   }, []);
 
-  // useEffect(() => {
-  //   if (socket?.id) {
-  //     // console.log(')
-  //     socket.emit("join", idForMessage);
-  //     socket.on(idForMessage!, (message) => {
-  //       setSendTo(message?.client_id);
-
-  //       console.log("clientId", clientId);
-  //       console.log("messageClientId", message?.client_id);
-
-  //       if (clientId === message?.client_id) {
-  //         console.log('booth id same')
-  //         setMessages((prevMessages) => [
-  //           ...prevMessages,
-  //           {
-  //             id: prevMessages.length + 1,
-  //             text: message.message,
-  //             socket_id: message.from,
-  //           },
-  //         ]);
-  //       }
-
-  //       if (true) {
-  //         audio
-  //           .play()
-  //           .catch((error) => console.log("Audio playback failed:", error));
-  //       }
-  //     });
-  //   }
-  // }, [socket?.id, idForMessage, clientId]);
-
-  // implement socket end
 
   useEffect(() => {
     if (socket?.id) {
       socket.emit("join", idForMessage);
-      // console.log('socket id', socket.id)
 
       const messageHandler = (message: any) => {
         setSendTo(message?.socket_id);
 
         if (clientId && clientId === message?.client_id) {
-          // console.log("Both IDs are the same");
-          // console.log('message from user', message);
           setMessages((prevMessages) => [
             ...prevMessages,
             {
@@ -178,7 +138,6 @@ const ChatBoardForAdmin = () => {
           const clientMessage = await getMessages(idForMessage!, clientId);
           // If clientMessage contains messages, update the state
           if (clientMessage?.length) {
-            // console.log('client messae',clientMessage)
             setMessages(clientMessage);
           }
         } catch (error) {
@@ -190,9 +149,7 @@ const ChatBoardForAdmin = () => {
     fetchMessages();
   }, [clientId]);
 
-  useEffect(() => {
-    if (messages) console.log("messages", messages);
-  }, [messages]);
+
 
   return (
     <div className="flex flex-col h-full bg-gray-100 w-4/5 mr-[20%] relative">

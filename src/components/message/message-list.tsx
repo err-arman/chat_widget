@@ -38,7 +38,6 @@ const MessageList = () => {
   const getClientList = async () => {
     try {
       const result = await axios.get(`/client`);
-      console.log(`result`, result.data.data);
       setClient(result.data.data);
     } catch (error) {
       console.log(`error in getClientList`, error);
@@ -52,7 +51,7 @@ const MessageList = () => {
   // implement socket start
   useEffect(() => {
     // Initialize socket connection
-    const socketInstance = io(`${process.env.NEXT_PUBLIC_SOCKET}`, {
+    const socketInstance = io(`${process.env.NEXT_PUBLIC_API_URL_ROOT}`, {
       transports: ["websocket"],
       autoConnect: true,
     });
